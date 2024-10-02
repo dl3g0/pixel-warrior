@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Guerra de Pixeles</title>
+    <style>
+        #canvas {
+            display: grid;
+            grid-template-columns: repeat(100, 10px); /* Cambia 100 por el ancho deseado */
+        }
+        .pixel {
+            width: 10px;
+            height: 10px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas"></div>
+
+    <input type="color" id="colorPicker" value="#000000" />
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const canvas = document.getElementById('canvas');
+        const colorPicker = document.getElementById('colorPicker');
+
+        // Crear el lienzo
+        for (let x = 0; x < 100; x++) {
+            for (let y = 0; y < 100; y++) {
+                const pixel = document.createElement('div');
+                pixel.classList.add('pixel');
+                pixel.dataset.x = x;
+                pixel.dataset.y = y;
+                pixel.style.backgroundColor = '#FFFFFF';
+
+                pixel.addEventListener('click', () => {
+                    const color = colorPicker.value;
+                    pixel.style.backgroundColor = color;
+
+                    // Emitir el cambio de píxel
+                    socket.emit('pixelChange', { x, y, color });
+                });
+
+                canvas.appendChild(pixel);
+            }
+        }
+
+        // Recibir datos del lienzo
+        socket.on('canvasData', (data) => {
+            data.forEach((row, x) => {
+                row.forEach((color, y) => {
+                    const pixel = canvas.children[x * 100 + y];
+                    pixel.style.backgroundColor = color;
+                });
+            });
+        });
+
+        // Recibir cambios de píxeles
+        socket.on('pixelChange', (data) => {
+            const { x, y, color } = data;
+            const pixel = canvas.children[x * 100 + y];
+            pixel.style.backgroundColor = color;
+        });
+    </script>
+</body>
+</html>
