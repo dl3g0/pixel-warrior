@@ -16,45 +16,43 @@
         }
         #ranking {
             margin-top: 20px;
-            border: 1px solid #ccc;
-            padding: 10px;
-        }
-        #nicknameInput {
-            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
-    <div id="nicknameContainer">
-        <input type="text" id="nicknameInput" placeholder="Ingrese su nickname" />
+    <div id="nicknameInput">
+        <input type="text" id="nickname" placeholder="Ingresa tu nickname" />
         <button id="enterButton">Entrar</button>
     </div>
 
-    <div id="canvas" style="display: none;"></div>
-    <input type="color" id="colorPicker" value="#000000" style="display: none;" />
+    <div id="canvas" style="display:none;"></div>
 
-    <div id="ranking" style="display: none;">
-        <h2>Clasificación de Usuarios</h2>
-        <ul id="rankingList"></ul>
-    </div>
+    <input type="color" id="colorPicker" value="#000000" style="display:none;" />
+
+    <h2>Clasificación de Usuarios</h2>
+    <ul id="ranking"></ul>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
         const canvas = document.getElementById('canvas');
         const colorPicker = document.getElementById('colorPicker');
-        const rankingList = document.getElementById('rankingList');
         const nicknameInput = document.getElementById('nicknameInput');
         const enterButton = document.getElementById('enterButton');
+        const rankingList = document.getElementById('ranking');
+
         let nickname = '';
 
         enterButton.addEventListener('click', () => {
-            nickname = nicknameInput.value.trim();
+            nickname = document.getElementById('nickname').value.trim();
             if (nickname) {
-                document.getElementById('nicknameContainer').style.display = 'none';
-                canvas.style.display = 'grid';  // Mostrar el lienzo
-                colorPicker.style.display = 'inline'; // Mostrar el selector de color
-                document.getElementById('ranking').style.display = 'block'; // Mostrar el ranking
+                // Ocultar el formulario de ingreso y mostrar el lienzo
+                nicknameInput.style.display = 'none';
+                canvas.style.display = 'grid';
+                colorPicker.style.display = 'inline';
+
+                // Emitir el nickname al servidor
+                socket.emit('setNickname', nickname);
 
                 // Crear el lienzo
                 for (let x = 0; x < 100; x++) {
@@ -69,8 +67,8 @@
                             const color = colorPicker.value;
                             pixel.style.backgroundColor = color;
 
-                            // Emitir el cambio de píxel junto con el nickname
-                            socket.emit('pixelChange', { x, y, color, nickname });
+                            // Emitir el cambio de píxel
+                            socket.emit('pixelChange', { x, y, color });
                         });
 
                         canvas.appendChild(pixel);
@@ -100,12 +98,13 @@
 
         // Actualizar la clasificación de usuarios
         socket.on('updateRanking', (pixelCount) => {
-            rankingList.innerHTML = ''; // Limpiar lista anterior
-            Object.entries(pixelCount).forEach(([userId, { nickname, count }]) => {
+            rankingList.innerHTML = ''; // Limpiar lista
+            for (const userId in pixelCount) {
+                const user = pixelCount[userId];
                 const listItem = document.createElement('li');
-                listItem.textContent = `${nickname}: ${count} píxeles`;
+                listItem.textContent = `${user.nickname}: ${user.count} píxeles`;
                 rankingList.appendChild(listItem);
-            });
+            }
         });
     </script>
 </body>

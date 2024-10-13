@@ -11,8 +11,7 @@ const canvasWidth = 100; // Ancho en píxeles
 const canvasHeight = 100; // Alto en píxeles
 const canvasData = Array(canvasWidth).fill().map(() => Array(canvasHeight).fill('#FFFFFF')); // Lienzo blanco
 
-// Objeto para contar píxeles por usuario
-const pixelCount = {};
+const pixelCount = {}; // Objeto para llevar el conteo de píxeles por usuario
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
@@ -28,19 +27,20 @@ io.on('connection', (socket) => {
     socket.emit('canvasData', canvasData);
     socket.emit('updateRanking', pixelCount);
 
+    // Manejar el evento para establecer el nickname
+    socket.on('setNickname', (nickname) => {
+        pixelCount[socket.id].nickname = nickname; // Guardar el nickname
+    });
+
     // Manejar cambios de píxeles
     socket.on('pixelChange', (data) => {
-        const { x, y, color, nickname } = data;
+        const { x, y, color } = data;
 
         // Actualizar el lienzo
         canvasData[x][y] = color;
 
-        // Guardar el nickname y contar píxeles para el usuario
-        pixelCount[socket.id].nickname = nickname; // Guardar el nickname
+        // Incrementar el contador de píxeles para el usuario
         pixelCount[socket.id].count += 1; // Incrementar contador
-
-        // Emitir el cambio a todos los demás usuarios
-        socket.broadcast.emit('pixelChange', data);
 
         // Emitir la clasificación actualizada a todos los usuarios
         io.emit('updateRanking', pixelCount);
