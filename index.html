@@ -14,41 +14,72 @@
             border: 1px solid #ccc;
             box-sizing: border-box;
         }
+        #ranking {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        #nicknameInput {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
-    <h1>Guerra de Píxeles</h1>
-    <div id="userCount">Usuarios conectados: 0</div> <!-- Elemento para mostrar el contador -->
-    <div id="canvas"></div>
-    <input type="color" id="colorPicker" value="#000000" />
+    <div id="nicknameContainer">
+        <input type="text" id="nicknameInput" placeholder="Ingrese su nickname" />
+        <button id="enterButton">Entrar</button>
+    </div>
+
+    <div id="canvas" style="display: none;"></div>
+    <input type="color" id="colorPicker" value="#000000" style="display: none;" />
+
+    <div id="ranking" style="display: none;">
+        <h2>Clasificación de Usuarios</h2>
+        <ul id="rankingList"></ul>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
         const canvas = document.getElementById('canvas');
         const colorPicker = document.getElementById('colorPicker');
-        const userCountElement = document.getElementById('userCount');
+        const rankingList = document.getElementById('rankingList');
+        const nicknameInput = document.getElementById('nicknameInput');
+        const enterButton = document.getElementById('enterButton');
+        let nickname = '';
 
-        // Crear el lienzo
-        for (let x = 0; x < 100; x++) {
-            for (let y = 0; y < 100; y++) {
-                const pixel = document.createElement('div');
-                pixel.classList.add('pixel');
-                pixel.dataset.x = x;
-                pixel.dataset.y = y;
-                pixel.style.backgroundColor = '#FFFFFF';
+        enterButton.addEventListener('click', () => {
+            nickname = nicknameInput.value.trim();
+            if (nickname) {
+                document.getElementById('nicknameContainer').style.display = 'none';
+                canvas.style.display = 'grid';  // Mostrar el lienzo
+                colorPicker.style.display = 'inline'; // Mostrar el selector de color
+                document.getElementById('ranking').style.display = 'block'; // Mostrar el ranking
 
-                pixel.addEventListener('click', () => {
-                    const color = colorPicker.value;
-                    pixel.style.backgroundColor = color;
+                // Crear el lienzo
+                for (let x = 0; x < 100; x++) {
+                    for (let y = 0; y < 100; y++) {
+                        const pixel = document.createElement('div');
+                        pixel.classList.add('pixel');
+                        pixel.dataset.x = x;
+                        pixel.dataset.y = y;
+                        pixel.style.backgroundColor = '#FFFFFF';
 
-                    // Emitir el cambio de píxel
-                    socket.emit('pixelChange', { x, y, color });
-                });
+                        pixel.addEventListener('click', () => {
+                            const color = colorPicker.value;
+                            pixel.style.backgroundColor = color;
 
-                canvas.appendChild(pixel);
+                            // Emitir el cambio de píxel junto con el nickname
+                            socket.emit('pixelChange', { x, y, color, nickname });
+                        });
+
+                        canvas.appendChild(pixel);
+                    }
+                }
+            } else {
+                alert('Por favor, ingrese un nickname válido.');
             }
-        }
+        });
 
         // Recibir datos del lienzo
         socket.on('canvasData', (data) => {
@@ -67,9 +98,14 @@
             pixel.style.backgroundColor = color;
         });
 
-        // Actualizar el contador de usuarios conectados
-        socket.on('userCount', (count) => {
-            userCountElement.textContent = 'Usuarios conectados: ' + count;
+        // Actualizar la clasificación de usuarios
+        socket.on('updateRanking', (pixelCount) => {
+            rankingList.innerHTML = ''; // Limpiar lista anterior
+            Object.entries(pixelCount).forEach(([userId, { nickname, count }]) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${nickname}: ${count} píxeles`;
+                rankingList.appendChild(listItem);
+            });
         });
     </script>
 </body>
