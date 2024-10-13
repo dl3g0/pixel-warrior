@@ -40,20 +40,18 @@
         const nicknameInput = document.getElementById('nicknameInput');
         const enterButton = document.getElementById('enterButton');
         const rankingList = document.getElementById('ranking');
-
+    
         let nickname = '';
-
+    
         enterButton.addEventListener('click', () => {
             nickname = document.getElementById('nickname').value.trim();
             if (nickname) {
-                // Ocultar el formulario de ingreso y mostrar el lienzo
                 nicknameInput.style.display = 'none';
                 canvas.style.display = 'grid';
                 colorPicker.style.display = 'inline';
-
-                // Emitir el nickname al servidor
+    
                 socket.emit('setNickname', nickname);
-
+    
                 // Crear el lienzo
                 for (let x = 0; x < 100; x++) {
                     for (let y = 0; y < 100; y++) {
@@ -62,15 +60,14 @@
                         pixel.dataset.x = x;
                         pixel.dataset.y = y;
                         pixel.style.backgroundColor = '#FFFFFF';
-
+    
                         pixel.addEventListener('click', () => {
                             const color = colorPicker.value;
                             pixel.style.backgroundColor = color;
-
-                            // Emitir el cambio de píxel
+    
                             socket.emit('pixelChange', { x, y, color });
                         });
-
+    
                         canvas.appendChild(pixel);
                     }
                 }
@@ -78,24 +75,32 @@
                 alert('Por favor, ingrese un nickname válido.');
             }
         });
-
+    
         // Recibir datos del lienzo
         socket.on('canvasData', (data) => {
-            data.forEach((row, x) => {
-                row.forEach((color, y) => {
-                    const pixel = canvas.children[x * 100 + y];
-                    pixel.style.backgroundColor = color;
+            if (canvas.children.length > 0) { // Verifica si hay píxeles en el lienzo
+                data.forEach((row, x) => {
+                    row.forEach((color, y) => {
+                        const pixelIndex = x * canvasWidth + y; // Cambia 100 por canvasWidth
+                        const pixel = canvas.children[pixelIndex];
+                        if (pixel) { // Verifica si el píxel existe
+                            pixel.style.backgroundColor = color;
+                        }
+                    });
                 });
-            });
+            }
         });
-
+    
         // Recibir cambios de píxeles
         socket.on('pixelChange', (data) => {
             const { x, y, color } = data;
-            const pixel = canvas.children[x * 100 + y];
-            pixel.style.backgroundColor = color;
+            const pixelIndex = x * canvasWidth + y; // Cambia 100 por canvasWidth
+            const pixel = canvas.children[pixelIndex];
+            if (pixel) { // Verifica si el píxel existe
+                pixel.style.backgroundColor = color;
+            }
         });
-
+    
         // Actualizar la clasificación de usuarios
         socket.on('updateRanking', (pixelCount) => {
             rankingList.innerHTML = ''; // Limpiar lista
