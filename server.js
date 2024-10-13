@@ -11,26 +11,21 @@ const canvasWidth = 100; // Ancho en píxeles
 const canvasHeight = 100; // Alto en píxeles
 const canvasData = Array(canvasWidth).fill().map(() => Array(canvasHeight).fill('#FFFFFF')); // Lienzo blanco
 
-const pixelCount = {}; // Objeto para llevar el conteo de píxeles por usuario
+let userCount = 0; // Contador de usuarios conectados
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
 io.on('connection', (socket) => {
-    console.log('Un usuario se ha conectado');
+    userCount++; // Aumentar el contador de usuarios
+    console.log('Un usuario se ha conectado. Usuarios conectados: ' + userCount);
 
-    // Inicializar contador de píxeles para el nuevo usuario
-    pixelCount[socket.id] = { nickname: '', count: 0 };
-
-    // Enviar el estado actual del lienzo y la clasificación al nuevo usuario
+    // Enviar el estado actual del lienzo al nuevo usuario
     socket.emit('canvasData', canvasData);
-    socket.emit('updateRanking', pixelCount);
-
-    // Manejar el evento para establecer el nickname
-    socket.on('setNickname', (nickname) => {
-        pixelCount[socket.id].nickname = nickname; // Guardar el nickname
-    });
+    
+    // Enviar el conteo de usuarios a todos los clientes
+    io.emit('userCount', userCount);
 
     // Manejar cambios de píxeles
     socket.on('pixelChange', (data) => {
@@ -39,16 +34,16 @@ io.on('connection', (socket) => {
         // Actualizar el lienzo
         canvasData[x][y] = color;
 
-        // Incrementar el contador de píxeles para el usuario
-        pixelCount[socket.id].count += 1; // Incrementar contador
-
-        // Emitir la clasificación actualizada a todos los usuarios
-        io.emit('updateRanking', pixelCount);
+        // Emitir el cambio a todos los demás usuarios
+        socket.broadcast.emit('pixelChange', data);
     });
 
     socket.on('disconnect', () => {
-        console.log('Un usuario se ha desconectado');
-        delete pixelCount[socket.id]; // Opcional: elimina al usuario de la clasificación
+        userCount--; // Disminuir el contador de usuarios
+        console.log('Un usuario se ha desconectado. Usuarios conectados: ' + userCount);
+        
+        // Enviar el conteo de usuarios a todos los clientes
+        io.emit('userCount', userCount);
     });
 });
 

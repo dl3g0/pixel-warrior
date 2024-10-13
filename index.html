@@ -14,102 +14,62 @@
             border: 1px solid #ccc;
             box-sizing: border-box;
         }
-        #ranking {
-            margin-top: 20px;
-        }
     </style>
 </head>
 <body>
-    <div id="nicknameInput">
-        <input type="text" id="nickname" placeholder="Ingresa tu nickname" />
-        <button id="enterButton">Entrar</button>
-    </div>
-
-    <div id="canvas" style="display:none;"></div>
-
-    <input type="color" id="colorPicker" value="#000000" style="display:none;" />
-
-    <h2>Clasificación de Usuarios</h2>
-    <ul id="ranking"></ul>
+    <h1>Guerra de Píxeles</h1>
+    <div id="userCount">Usuarios conectados: 0</div> <!-- Elemento para mostrar el contador -->
+    <div id="canvas"></div>
+    <input type="color" id="colorPicker" value="#000000" />
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
         const canvas = document.getElementById('canvas');
         const colorPicker = document.getElementById('colorPicker');
-        const nicknameInput = document.getElementById('nicknameInput');
-        const enterButton = document.getElementById('enterButton');
-        const rankingList = document.getElementById('ranking');
-    
-        let nickname = '';
-    
-        enterButton.addEventListener('click', () => {
-            nickname = document.getElementById('nickname').value.trim();
-            if (nickname) {
-                nicknameInput.style.display = 'none';
-                canvas.style.display = 'grid';
-                colorPicker.style.display = 'inline';
-    
-                socket.emit('setNickname', nickname);
-    
-                // Crear el lienzo
-                for (let x = 0; x < 100; x++) {
-                    for (let y = 0; y < 100; y++) {
-                        const pixel = document.createElement('div');
-                        pixel.classList.add('pixel');
-                        pixel.dataset.x = x;
-                        pixel.dataset.y = y;
-                        pixel.style.backgroundColor = '#FFFFFF';
-    
-                        pixel.addEventListener('click', () => {
-                            const color = colorPicker.value;
-                            pixel.style.backgroundColor = color;
-    
-                            socket.emit('pixelChange', { x, y, color });
-                        });
-    
-                        canvas.appendChild(pixel);
-                    }
-                }
-            } else {
-                alert('Por favor, ingrese un nickname válido.');
+        const userCountElement = document.getElementById('userCount');
+
+        // Crear el lienzo
+        for (let x = 0; x < 100; x++) {
+            for (let y = 0; y < 100; y++) {
+                const pixel = document.createElement('div');
+                pixel.classList.add('pixel');
+                pixel.dataset.x = x;
+                pixel.dataset.y = y;
+                pixel.style.backgroundColor = '#FFFFFF';
+
+                pixel.addEventListener('click', () => {
+                    const color = colorPicker.value;
+                    pixel.style.backgroundColor = color;
+
+                    // Emitir el cambio de píxel
+                    socket.emit('pixelChange', { x, y, color });
+                });
+
+                canvas.appendChild(pixel);
             }
-        });
-    
+        }
+
         // Recibir datos del lienzo
         socket.on('canvasData', (data) => {
-            if (canvas.children.length > 0) { // Verifica si hay píxeles en el lienzo
-                data.forEach((row, x) => {
-                    row.forEach((color, y) => {
-                        const pixelIndex = x * canvasWidth + y; // Cambia 100 por canvasWidth
-                        const pixel = canvas.children[pixelIndex];
-                        if (pixel) { // Verifica si el píxel existe
-                            pixel.style.backgroundColor = color;
-                        }
-                    });
+            data.forEach((row, x) => {
+                row.forEach((color, y) => {
+                    const pixel = canvas.children[x * 100 + y];
+                    pixel.style.backgroundColor = color;
                 });
-            }
+            });
         });
-    
+
         // Recibir cambios de píxeles
         socket.on('pixelChange', (data) => {
             const { x, y, color } = data;
-            const pixelIndex = x * canvasWidth + y; // Cambia 100 por canvasWidth
-            const pixel = canvas.children[pixelIndex];
-            if (pixel) { // Verifica si el píxel existe
-                pixel.style.backgroundColor = color;
-            }
+            const pixel = canvas.children[x * 100 + y];
+            pixel.style.backgroundColor = color;
         });
-    
-        // Actualizar la clasificación de usuarios
-        socket.on('updateRanking', (pixelCount) => {
-            rankingList.innerHTML = ''; // Limpiar lista
-            for (const userId in pixelCount) {
-                const user = pixelCount[userId];
-                const listItem = document.createElement('li');
-                listItem.textContent = `${user.nickname}: ${user.count} píxeles`;
-                rankingList.appendChild(listItem);
-            }
+
+        // Actualizar el contador de usuarios conectados
+        socket.on('userCount', (count) => {
+            userCountElement.textContent = 'Usuarios conectados: ' + count;
         });
     </script>
 </body>
