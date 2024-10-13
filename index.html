@@ -17,8 +17,9 @@
     </style>
 </head>
 <body>
+    <h1>Guerra de Píxeles</h1>
+    <div id="userCount">Usuarios conectados: 0</div> <!-- Elemento para mostrar el contador -->
     <div id="canvas"></div>
-
     <input type="color" id="colorPicker" value="#000000" />
 
     <script src="/socket.io/socket.io.js"></script>
@@ -26,6 +27,7 @@
         const socket = io();
         const canvas = document.getElementById('canvas');
         const colorPicker = document.getElementById('colorPicker');
+        const userCountElement = document.getElementById('userCount');
 
         // Crear el lienzo
         for (let x = 0; x < 100; x++) {
@@ -63,6 +65,11 @@
             const { x, y, color } = data;
             const pixel = canvas.children[x * 100 + y];
             pixel.style.backgroundColor = color;
+        });
+
+        // Actualizar el contador de usuarios conectados
+        socket.on('userCount', (count) => {
+            userCountElement.textContent = 'Usuarios conectados: ' + count;
         });
     </script>
 </body>
