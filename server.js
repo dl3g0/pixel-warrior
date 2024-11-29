@@ -1,28 +1,15 @@
 const express = require('express');
-require('dotenv').config();
 const http = require('http');
 const socketIo = require('socket.io');
 const admin = require('firebase-admin');
-const serviceAccount = {
-    type: "service_account",
-    project_id: process.env.FIREBASE_PROJECT_ID,
-    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),  // Reemplazar saltos de línea
-    client_email: process.env.FIREBASE_CLIENT_EMAIL,
-    client_id: process.env.FIREBASE_CLIENT_ID,
-    auth_uri: process.env.FIREBASE_AUTH_URI,
-    token_uri: process.env.FIREBASE_TOKEN_URI,
-    auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
-    client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL
-  };
 
 // Configuración de Firebase Admin (usa tu archivo de clave de servicio)
+const serviceAccount = require('./path/pixel-warrior.json'); // Asegúrate de tener este archivo
 
-// Inicializar Firebase con las credenciales
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: "https://pixel-warrior-13fcc-default-rtdb.firebaseio.com"
-  });
+});
 
 const database = admin.database();
 
