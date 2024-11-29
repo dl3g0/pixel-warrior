@@ -94,7 +94,6 @@
 
         // Actualizar lienzo inicial
         socket.on('canvasData', (data) => {
-            console.log(data);
             // Limpiar el lienzo
             for (let i = 0; i < canvas.children.length; i++) {
                 canvas.children[i].style.backgroundColor = '#FFFFFF'; // Color predeterminado
