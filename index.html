@@ -2,11 +2,11 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Guerra de Pixeles</title>
+    <title>Guerra de Píxeles</title>
     <style>
         #canvas {
             display: grid;
-            grid-template-columns: repeat(100, 10px); /* Cambia 100 por el ancho deseado */
+            grid-template-columns: repeat(100, 10px);
         }
         .pixel {
             width: 10px;
@@ -14,13 +14,26 @@
             border: 1px solid #ccc;
             box-sizing: border-box;
         }
+        #nicknameForm {
+            margin: 20px;
+        }
     </style>
 </head>
 <body>
     <h1>Guerra de Píxeles</h1>
-    <div id="userCount">Usuarios conectados: 0</div> <!-- Elemento para mostrar el contador -->
+
+    <!-- Formulario para ingresar el nickname -->
+    <div id="nicknameForm">
+        <label for="nickname">Elige tu nickname:</label>
+        <input type="text" id="nickname" placeholder="Nickname" />
+        <button onclick="setNickname()">Ingresar</button>
+    </div>
+
+    <div id="userCount">Usuarios conectados: 0</div>
     <div id="canvas"></div>
     <input type="color" id="colorPicker" value="#000000" />
+
+    <div id="pixelInfo"></div> <!-- Información del píxel al hacer hover -->
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -28,8 +41,22 @@
         const canvas = document.getElementById('canvas');
         const colorPicker = document.getElementById('colorPicker');
         const userCountElement = document.getElementById('userCount');
+        const nicknameInput = document.getElementById('nickname');
+        const nicknameForm = document.getElementById('nicknameForm');
+        const pixelInfoElement = document.getElementById('pixelInfo');
 
-        // Crear el lienzo
+        let nickname = '';
+
+        // Función para establecer el nickname
+        function setNickname() {
+            nickname = nicknameInput.value;
+            if (nickname.trim() !== '') {
+                nicknameForm.style.display = 'none'; // Ocultar formulario de nickname
+                socket.emit('setNickname', nickname); // Enviar el nickname al servidor
+            }
+        }
+
+        // Crear lienzo
         for (let x = 0; x < 100; x++) {
             for (let y = 0; y < 100; y++) {
                 const pixel = document.createElement('div');
@@ -38,11 +65,26 @@
                 pixel.dataset.y = y;
                 pixel.style.backgroundColor = '#FFFFFF';
 
+                // Evento para hacer hover sobre el píxel
+                pixel.addEventListener('mouseover', () => {
+                    
+                        const x = pixel.dataset.x;
+                        const y = pixel.dataset.y;
+                        // Solicitar datos del píxel desde el servidor
+                        socket.emit('fetchPixelData', { x, y });
+                    
+                });
+
                 pixel.addEventListener('click', () => {
+                    if (!nickname) {
+                        alert('Por favor, ingresa tu nickname antes de colocar píxeles.');
+                        return;
+                    }
+
                     const color = colorPicker.value;
                     pixel.style.backgroundColor = color;
 
-                    // Emitir el cambio de píxel
+                    // Enviar cambio de píxel con el nombre de usuario
                     socket.emit('pixelChange', { x, y, color });
                 });
 
@@ -50,24 +92,48 @@
             }
         }
 
-        // Recibir datos del lienzo
+        // Actualizar lienzo inicial
         socket.on('canvasData', (data) => {
-            data.forEach((row, x) => {
-                row.forEach((color, y) => {
-                    const pixel = canvas.children[x * 100 + y];
-                    pixel.style.backgroundColor = color;
+            console.log(data);
+            // Limpiar el lienzo
+            for (let i = 0; i < canvas.children.length; i++) {
+                canvas.children[i].style.backgroundColor = '#FFFFFF'; // Color predeterminado
+            }
+
+            // Iterar sobre los datos de Firebase
+            Object.keys(data).forEach((x) => {
+                Object.keys(data[x]).forEach((y) => {
+                    const color = data[x][y];
+                    const pixel = canvas.children[x * 100 + parseInt(y)];
+                    if (pixel) {
+                        pixel.style.backgroundColor = color;
+                    }
                 });
             });
         });
 
-        // Recibir cambios de píxeles
+        // Actualizar píxeles
         socket.on('pixelChange', (data) => {
-            const { x, y, color } = data;
+            console.log(data);
+            const { x, y, color, user } = data;
             const pixel = canvas.children[x * 100 + y];
             pixel.style.backgroundColor = color;
+
+            // Mostrar el nombre del usuario que cambió el píxel (puedes personalizar esto)
+            console.log(`Pixel (${x}, ${y}) cambiado por ${user} a color ${color}`);
         });
 
-        // Actualizar el contador de usuarios conectados
+        // Mostrar los datos del píxel (color y usuario) al hacer hover
+        socket.on('pixelData', (data) => {
+            if(data){
+                const { color, user } = data;
+                pixelInfoElement.textContent = `Color: ${color}, Usuario: ${user}`;
+            }else{
+                pixelInfoElement.textContent = ``;
+            }
+        });
+
+        // Actualizar el contador de usuarios
         socket.on('userCount', (count) => {
             userCountElement.textContent = 'Usuarios conectados: ' + count;
         });
