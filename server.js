@@ -3,8 +3,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 const admin = require('firebase-admin');
 
-// Configuración de Firebase Admin (usa tu archivo de clave de servicio)
-const serviceAccount = require('./path/pixel-warrior.json'); // Asegúrate de tener este archivo
+const serviceAccount = require('./path/pixel-warrior.json');
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
@@ -12,8 +11,6 @@ admin.initializeApp({
 });
 
 const database = admin.database();
-
-// Configuración del servidor
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
@@ -21,67 +18,64 @@ const io = socketIo(server);
 const canvasWidth = 100;
 const canvasHeight = 100;
 
-// Rutas
-app.use(express.static(__dirname)); // Sirve archivos estáticos como index.html
+app.use(express.static(__dirname));
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
-// Contador de usuarios conectados
+//cantidad de usuarios
 let userCount = 0;
 
 io.on('connection', (socket) => {
-    let userNickname = ''; // Inicializar el nickname vacío
+    let userNickname = ''
 
     userCount++;
     console.log('Un usuario se ha conectado. Usuarios conectados:', userCount);
 
-    // Enviar el estado inicial del lienzo desde Firebase
+    //obtiene datos de firebase
     database.ref('canvas').once('value', (snapshot) => {
         const data = snapshot.val() || {};
-        const canvasData = Array(canvasWidth).fill().map(() => Array(canvasHeight).fill('#FFFFFF'));  // Inicializamos el lienzo con color blanco
+        const canvasData = Array(canvasWidth).fill().map(() => Array(canvasHeight).fill('#FFFFFF')); //datos en blanco por defecto
     
-        // Iterar sobre los datos de Firebase para asignar colores y usuarios a cada píxel
+        //recorre los datos obtenido de firebase y los reenvia a los usuarios conectados
         Object.keys(data).forEach((x) => {
             Object.keys(data[x]).forEach((y) => {
-                // Verificar si el píxel tiene datos en Firebase
                 if (data[x][y] && data[x][y].color) {
-                    canvasData[x][y] = data[x][y].color;  // Asignar el color desde Firebase
+                    canvasData[x][y] = data[x][y].color;
                 }
             });
         });
     
-        socket.emit('canvasData', canvasData);  // Enviar los datos del lienzo al cliente
+        socket.emit('canvasData', canvasData);
     });
     
 
-    // Enviar el número de usuarios conectados
+    //enviar usuarios conectados a los otros usuarios
     io.emit('userCount', userCount);
 
-    // Escuchar el cambio de nickname
+    //escucha el cambio del nickname y lo guarda
     socket.on('setNickname', (nickname) => {
-        userNickname = nickname; // Guardar el nickname del usuario
+        userNickname = nickname; //
     });
 
-    // Escuchar cambios de píxeles
     socket.on('pixelChange', (data) => {
         const { x, y, color } = data;
 
-        // Guardar el cambio en Firebase, junto con el nombre de usuario
+        // guarda el nombre, color posicion del pixel en firebase
         database.ref(`canvas/${x}/${y}`).set({
             color: color,
-            user: userNickname  // Guardar el nickname del usuario que hizo el cambio
+            user: userNickname
         });
 
-        // Enviar el cambio a los demás clientes junto con el nickname
+        //enviar actualizacion a usuarios
         socket.broadcast.emit('pixelChange', { x, y, color, user: userNickname });
     });
 
-    // Escuchar la solicitud de datos de un píxel
+    // esuchar evento para cuando el usuario haga hover se muestre el cambio de quien lo hizo
     socket.on('fetchPixelData', (data) => {
         const { x, y } = data;
 
-        // Obtener los datos del píxel desde Firebase
+        //obtener datos desde firebase
         database.ref(`canvas/${x}/${y}`).once('value', (snapshot) => {
             const pixelData = snapshot.val();
 
@@ -98,12 +92,11 @@ io.on('connection', (socket) => {
         userCount--;
         console.log('Un usuario se ha desconectado. Usuarios conectados:', userCount);
 
-        // Actualizar el número de usuarios conectados
+        //en caso de desconeccion actualiza el numero de usuarios
         io.emit('userCount', userCount);
     });
 });
 
-// Iniciar servidor
 server.listen(3000, () => {
     console.log('Servidor escuchando en http://localhost:3000');
 });

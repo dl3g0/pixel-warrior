@@ -1,40 +1,186 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title>Guerra de Píxeles</title>
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+        src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        clifford: '#da373d',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         #canvas {
             display: grid;
             grid-template-columns: repeat(100, 10px);
         }
+
         .pixel {
+            border-radius: 3px;
             width: 10px;
             height: 10px;
             border: 1px solid #ccc;
             box-sizing: border-box;
         }
+
         #nicknameForm {
             margin: 20px;
         }
+
+        .pixel-art-text {
+        font-family: 'Courier New', monospace;
+        letter-spacing: -1px;
+        line-height: 1.2;
+        text-shadow: 2px 2px 0 #000;
+      }
+
+      .pixel-art-header,
+      .pixel-art-footer {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .pixel-art-header::before,
+      .pixel-art-footer::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: linear-gradient(
+          45deg,
+          rgba(0, 0, 0, 0.1) 25%,
+          transparent 25%,
+          transparent 50%,
+          rgba(0, 0, 0, 0.1) 50%,
+          rgba(0, 0, 0, 0.1) 75%,
+          transparent 75%,
+          transparent
+        );
+        background-size: 4px 4px;
+        pointer-events: none;
+      }
+
+      .pixel-art-button {
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        text-transform: uppercase;
+        border: 4px solid #000;
+        box-shadow: 4px 4px 0 #000;
+        transition: all 0.1s ease;
+      }
+
+      .pixel-art-button:hover {
+        transform: translate(2px, 2px);
+        box-shadow: 2px 2px 0 #000;
+      }
+
+      .pixel-art-button:active {
+        transform: translate(4px, 4px);
+        box-shadow: none;
+      }
+
+      .colorPicker{
+        position: fixed;
+        bottom: 1rem;
+        right: 1rem;
+        border-radius: 100%;
+        z-index: 1;
+      }
     </style>
 </head>
+
 <body>
-    <h1>Guerra de Píxeles</h1>
+    <div class="min-h-screen flex flex-col bg-gray-100">
+        <header class="pixel-art-header bg-blue-500 text-white p-4 text-center">
+            <h1 class="text-4xl font-bold pixel-art-text">Pixel Warrior  <div id="userCount">Usuarios conectados: 0</div></h1>
 
-    <!-- Formulario para ingresar el nickname -->
-    <div id="nicknameForm">
-        <label for="nickname">Elige tu nickname:</label>
-        <input type="text" id="nickname" placeholder="Nickname" />
-        <button onclick="setNickname()">Ingresar</button>
+            <ul class="dance-animation">
+                <li class="dance-frame dance-animation--dancer1"></li>
+                <li class="dance-frame dance-animation--dancer2"></li>
+                <li class="dance-frame dance-animation--dancer3"></li>
+                <li class="dance-frame dance-animation--dancer4"></li>
+                <li class="dance-frame dance-animation--dancer5"></li>
+                <li class="dance-frame dance-animation--dancer6"></li>
+                <li class="dance-frame dance-animation--dancer7"></li>
+                <li class="dance-frame dance-animation--dancer8"></li>
+                <li class="dance-frame dance-animation--dancer9"></li>
+                <li class="dance-frame dance-animation--dancer10"></li>
+                <li class="dance-frame dance-animation--dancer11"></li>
+              </ul>
+        </header>
+
+        <main class="flex-grow container mx-auto px-4 py-8">
+            <div class="max-w-2xl mx-auto text-center">
+                <h2 class="text-2xl font-semibold mb-4 pixel-art-text">Bienvenido a pixel warrior</h2>
+                <p class="mb-6">Explora la maravilla de nuestro lienzo creado por nuestros usuarios y se parte del mismo!</p>
+                <div class="flex flex-col justify-center mb-6">
+                    <div style="height: 50px;">
+                        <div id="pixelInfo"></div>
+                    </div>
+                    <div class="colorPicker flex items-center">
+                        <b>Color: </b><input type="color" id="colorPicker" value="#000000" />
+                    </div>
+                    
+                    <div class="flex" style="align-items: center; justify-content: center;">
+                        <div class="relative" id="canvas">
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="pixel-art-footer bg-blue-500 text-white p-4 text-center">
+            <p class="pixel-art-text">&copy; 2024 Pixel Warrior</p>
+        </footer>
+        <div class="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true" id="modal">
+
+            <div class="fixed inset-0 bg-gray-500/75 transition-opacity" aria-hidden="true"></div>
+          
+            <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+              <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+
+                <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                  <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                    
+                      <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                        <div class="sm:col-span-4" id="nicknameForm">
+                            <label for="nickname" class="block text-sm/6 font-medium text-gray-900">Nombre de usuario</label>
+                            <div class="mt-2 mb-2">
+                              <div class="flex items-center rounded-md bg-white">
+                                
+                                <input type="text"  id="nickname" class="block min-w-0 grow py-1.5 pl-1 pr-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-0 sm:text-sm/6">
+                              </div>
+                            </div>
+                        </div>
+                      </div>
+                    
+                  </div>
+                  <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                    <button class="pixel-art-button bg-green-500 text-white px-4 py-2 mb-4" onclick="setNickname()">
+                        INGRESAR
+                    </button>
+                    <button class="pixel-art-button bg-red-500 text-white px-4 py-2 mb-4 mr-2" onclick="setNickname()">
+                        CANCELAR
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
     </div>
-
-    <div id="userCount">Usuarios conectados: 0</div>
-    <div id="canvas"></div>
-    <input type="color" id="colorPicker" value="#000000" />
-
-    <div id="pixelInfo"></div> <!-- Información del píxel al hacer hover -->
-
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
@@ -43,20 +189,20 @@
         const userCountElement = document.getElementById('userCount');
         const nicknameInput = document.getElementById('nickname');
         const nicknameForm = document.getElementById('nicknameForm');
+        const modal =  document.getElementById('modal');
         const pixelInfoElement = document.getElementById('pixelInfo');
-
         let nickname = '';
-
-        // Función para establecer el nickname
+        
+        // ingresar nickname
         function setNickname() {
             nickname = nicknameInput.value;
             if (nickname.trim() !== '') {
-                nicknameForm.style.display = 'none'; // Ocultar formulario de nickname
-                socket.emit('setNickname', nickname); // Enviar el nickname al servidor
+                modal.style.display = 'none';
+                socket.emit('setNickname', nickname);
             }
         }
 
-        // Crear lienzo
+        //genera lienzo
         for (let x = 0; x < 100; x++) {
             for (let y = 0; y < 100; y++) {
                 const pixel = document.createElement('div');
@@ -65,26 +211,42 @@
                 pixel.dataset.y = y;
                 pixel.style.backgroundColor = '#FFFFFF';
 
-                // Evento para hacer hover sobre el píxel
+                //si hay hover en el pixel pedir datos a base
                 pixel.addEventListener('mouseover', () => {
+
+                    const x = pixel.dataset.x;
+                    const y = pixel.dataset.y;
                     
-                        const x = pixel.dataset.x;
-                        const y = pixel.dataset.y;
-                        // Solicitar datos del píxel desde el servidor
-                        socket.emit('fetchPixelData', { x, y });
-                    
+                    socket.emit('fetchPixelData', { x, y });
+
                 });
 
+                //obliga a que antes de guardar el usuario tenga nick
                 pixel.addEventListener('click', () => {
                     if (!nickname) {
-                        alert('Por favor, ingresa tu nickname antes de colocar píxeles.');
+                        alert('Ingresa tu nickname antes de colocar píxeles.');
                         return;
                     }
 
                     const color = colorPicker.value;
                     pixel.style.backgroundColor = color;
 
-                    // Enviar cambio de píxel con el nombre de usuario
+                    //envia cambios a base
+                    socket.emit('pixelChange', { x, y, color });
+                });
+
+                //funcion para borrar al dar anti click
+                pixel.addEventListener('contextmenu', (event) => {
+                    event.preventDefault();
+                    if (!nickname) {
+                        alert('Ingresa tu nickname antes de colocar píxeles.');
+                        return;
+                    }
+
+                    
+                    color = pixel.style.backgroundColor = '#FFFFFF';
+
+                    //envia los datos de borrado a base
                     socket.emit('pixelChange', { x, y, color });
                 });
 
@@ -92,14 +254,14 @@
             }
         }
 
-        // Actualizar lienzo inicial
+        // actualizar el lienzo
         socket.on('canvasData', (data) => {
-            // Limpiar el lienzo
+            
             for (let i = 0; i < canvas.children.length; i++) {
-                canvas.children[i].style.backgroundColor = '#FFFFFF'; // Color predeterminado
+                canvas.children[i].style.backgroundColor = '#FFFFFF';
             }
 
-            // Iterar sobre los datos de Firebase
+            // recorrer los datos obtenidos desde base
             Object.keys(data).forEach((x) => {
                 Object.keys(data[x]).forEach((y) => {
                     const color = data[x][y];
@@ -111,31 +273,30 @@
             });
         });
 
-        // Actualizar píxeles
+        // visualizar cambios del usuario
         socket.on('pixelChange', (data) => {
             console.log(data);
             const { x, y, color, user } = data;
             const pixel = canvas.children[x * 100 + y];
             pixel.style.backgroundColor = color;
 
-            // Mostrar el nombre del usuario que cambió el píxel (puedes personalizar esto)
             console.log(`Pixel (${x}, ${y}) cambiado por ${user} a color ${color}`);
         });
 
-        // Mostrar los datos del píxel (color y usuario) al hacer hover
+        // funcion para visualizar que usuario hizo cambios al hacer hover
         socket.on('pixelData', (data) => {
-            if(data){
+            if (data) {
                 const { color, user } = data;
-                pixelInfoElement.textContent = `Color: ${color}, Usuario: ${user}`;
-            }else{
+                pixelInfoElement.innerHTML = `<div> <span style="width:20px; height:20px; background:${color}; display:inline-block;"></span> Color: ${color}, Usuario: ${user}</div>`;
+            } else {
                 pixelInfoElement.textContent = ``;
             }
         });
 
-        // Actualizar el contador de usuarios
         socket.on('userCount', (count) => {
             userCountElement.textContent = 'Usuarios conectados: ' + count;
         });
     </script>
 </body>
+
 </html>
