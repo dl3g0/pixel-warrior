@@ -231,11 +231,11 @@
                     const color = colorPicker.value;
                     pixel.style.backgroundColor = color;
 
-                    //envia cambios a base
+                    //envía cambios a base
                     socket.emit('pixelChange', { x, y, color });
                 });
 
-                //funcion para borrar al dar anti click
+                //función para borrar al dar anti click
                 pixel.addEventListener('contextmenu', (event) => {
                     event.preventDefault();
                     if (!nickname) {
@@ -283,7 +283,7 @@
             console.log(`Pixel (${x}, ${y}) cambiado por ${user} a color ${color}`);
         });
 
-        // funcion para visualizar que usuario hizo cambios al hacer hover
+        // función para visualizar que usuario hizo cambios al hacer hover
         socket.on('pixelData', (data) => {
             if (data) {
                 const { color, user } = data;
